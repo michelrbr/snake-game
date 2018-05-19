@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -142,9 +143,18 @@ public class GameStage extends SurfaceView implements Runnable {
 
         // Hit the screen edge
         if (_snake.getHeadX() == -1) dead = true;
-        if (_snake.getHeadX() >= NUM_BLOCKS_WIDE) dead = true;
+        if (_snake.getHeadX() >= NUM_BLOCKS_WIDE + 1) dead = true;
         if (_snake.getHeadY() == -1) dead = true;
-        if (_snake.getHeadY() == _numBlocksHigh) dead = true;
+        if (_snake.getHeadY() == _numBlocksHigh + 1) dead = true;
+
+        // Hit itself
+        for (int i = _snake.getSnakeLength(); i > 0; i--) {
+            if ((i > 4)
+                    && (_snake.getHeadX() == _snake.bodyXs[i])
+                    && (_snake.getHeadY() == _snake.bodyYs[i])) {
+                dead = true;
+            }
+        }
 
         return dead;
     }
@@ -171,6 +181,15 @@ public class GameStage extends SurfaceView implements Runnable {
                         _paint);
             }
 
+            // Set food color
+            _paint.setColor(Color.argb(255, 100, 255, 100));
+            _canvas.drawRect(
+                    _food.left,
+                    _food.top,
+                    _food.right,
+                    _food.bottom,
+                    _paint);
+
             // Set snake color
             _paint.setColor(Color.argb(255, 255, 255, 255));
 
@@ -183,16 +202,29 @@ public class GameStage extends SurfaceView implements Runnable {
                         _paint);
             }
 
-            // Set food color
-            _paint.setColor(Color.argb(255, 100, 255, 100));
-            _canvas.drawRect(
-                    _food.left,
-                    _food.top,
-                    _food.right,
-                    _food.bottom,
-                    _paint);
-
             _surfaceHolder.unlockCanvasAndPost(_canvas);
         }
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent motionEvent) {
+
+        switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_UP:
+
+                int posX = Math.round(motionEvent.getX());
+                int posY = Math.round(motionEvent.getY());
+
+                if(_controls.getButton(Controls.Button.LEFT).contains(posX, posY)) {
+                    _snake.setCurrentDirection(Snake.Direction.LEFT);
+                } else if(_controls.getButton(Controls.Button.UP).contains(posX, posY)) {
+                    _snake.setCurrentDirection(Snake.Direction.UP);
+                } else if(_controls.getButton(Controls.Button.RIGHT).contains(posX, posY)) {
+                    _snake.setCurrentDirection(Snake.Direction.RIGHT);
+                } else if(_controls.getButton(Controls.Button.DOWN).contains(posX, posY)) {
+                    _snake.setCurrentDirection(Snake.Direction.DOWN);
+                }
+        }
+        return true;
     }
 }
