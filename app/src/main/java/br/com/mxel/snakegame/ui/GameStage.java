@@ -36,6 +36,7 @@ public class GameStage extends SurfaceView implements Runnable {
     private Snake _snake;
     private Controls _controls;
     private Rect _food;
+    private int _score;
 
     public GameStage(Context context, Point size) {
         super(context);
@@ -96,7 +97,7 @@ public class GameStage extends SurfaceView implements Runnable {
                 Snake.Direction.RIGHT);
 
         spawnFood();
-
+        _score = 0;
         _nextFrameTime = System.currentTimeMillis();
     }
 
@@ -129,12 +130,24 @@ public class GameStage extends SurfaceView implements Runnable {
 
     public void update() {
 
+        if ((_snake.getHeadX() * _snakeBlockSize) == _food.left
+                && (_snake.getHeadY() * _snakeBlockSize) == _food.top) {
+            eatFood();
+        }
+
         _snake.moveSnake();
 
         if (detectDeath()) {
 
             startGame();
         }
+    }
+
+    private void eatFood() {
+
+        spawnFood();
+        _snake.increaseSize();
+        _score++;
     }
 
     private boolean detectDeath(){
@@ -201,6 +214,10 @@ public class GameStage extends SurfaceView implements Runnable {
                         (_snake.bodyYs[i] * _snakeBlockSize) + _snakeBlockSize,
                         _paint);
             }
+
+            // Scale the HUD text
+            _paint.setTextSize(70);
+            _canvas.drawText(String.format("Score: %s", _score), 10, 60, _paint);
 
             _surfaceHolder.unlockCanvasAndPost(_canvas);
         }
