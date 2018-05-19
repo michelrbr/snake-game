@@ -1,6 +1,6 @@
 package br.com.mxel.snakegame.model;
 
-public class SnakeModel {
+public class Snake {
 
     public enum Direction {
         UP,
@@ -15,7 +15,7 @@ public class SnakeModel {
 
     private Direction _currentDirection;
 
-    public SnakeModel(int initX, int initY, Direction direction) {
+    public Snake(int initX, int initY, Direction direction) {
 
         bodyXs = new int[200];
         bodyYs = new int[200];
