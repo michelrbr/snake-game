@@ -2,7 +2,6 @@ package br.com.mxel.snakegame.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -12,6 +11,7 @@ import android.view.SurfaceView;
 
 import java.util.Random;
 
+import br.com.mxel.snakegame.R;
 import br.com.mxel.snakegame.model.Controls;
 import br.com.mxel.snakegame.model.Snake;
 
@@ -39,8 +39,28 @@ public class GameStage extends SurfaceView implements Runnable {
     private Rect _food;
     private int _score;
 
+    private String _currentScoreMsg;
+    private String _lastScoreMsg;
+    private String _startPromptMsg;
+
+    private int _backgroundColor;
+    private int _textColor;
+    private int _snakeColor;
+    private int _foodColor;
+    private int _controllersColor;
+
     public GameStage(Context context, Point size) {
         super(context);
+
+        _currentScoreMsg = getContext().getString(R.string.current_score);
+        _lastScoreMsg = getContext().getString(R.string.last_score);
+        _startPromptMsg = getContext().getString(R.string.start_game_prompt);
+
+        _backgroundColor = getContext().getResources().getColor(R.color.background);
+        _textColor = getContext().getResources().getColor(R.color.text);
+        _snakeColor = getContext().getResources().getColor(R.color.snake);
+        _foodColor = getContext().getResources().getColor(R.color.food);
+        _controllersColor = getContext().getResources().getColor(R.color.controllers);
 
         _screenX = size.x;
         _screenY = size.y;
@@ -61,8 +81,6 @@ public class GameStage extends SurfaceView implements Runnable {
         _food = new Rect();
 
         _nextFrameTime = System.currentTimeMillis();
-
-        //startGame();
     }
 
     @Override
@@ -185,6 +203,9 @@ public class GameStage extends SurfaceView implements Runnable {
 
             _canvas = _surfaceHolder.lockCanvas();
 
+            // Set background color
+            _canvas.drawColor(_backgroundColor);
+
             if(_isPlaying) {
                 drawGame(_canvas, _paint);
             } else {
@@ -197,11 +218,8 @@ public class GameStage extends SurfaceView implements Runnable {
 
     private void drawGame(Canvas canvas, Paint paint) {
 
-        // Set background color
-        canvas.drawColor(Color.argb(255, 26, 128, 182));
-
         // Set controls color
-        paint.setColor(Color.argb(100, 255, 255, 255));
+        paint.setColor(_controllersColor);
 
         // Draw controls
         for (Rect control : _controls.getButtons()) {
@@ -214,7 +232,7 @@ public class GameStage extends SurfaceView implements Runnable {
         }
 
         // Set food color
-        paint.setColor(Color.argb(255, 100, 255, 100));
+        paint.setColor(_foodColor);
         canvas.drawRect(
                 _food.left,
                 _food.top,
@@ -223,7 +241,7 @@ public class GameStage extends SurfaceView implements Runnable {
                 paint);
 
         // Set snake color
-        paint.setColor(Color.argb(255, 255, 255, 255));
+        paint.setColor(_snakeColor);
 
         // Draw the snake
         for (int i = 0; i < _snake.getSnakeLength() + 1; i++) {
@@ -236,16 +254,13 @@ public class GameStage extends SurfaceView implements Runnable {
 
         // Scale the HUD text
         paint.setTextSize(70);
-        canvas.drawText(String.format("Score: %s", _score), 10, 60, paint);
+        canvas.drawText(String.format(_currentScoreMsg, _score), 10, 60, paint);
     }
 
     private void drawStart(Canvas canvas, Paint paint) {
 
-        // Set background color
-        canvas.drawColor(Color.argb(255, 26, 128, 182));
-
         // Set text color
-        paint.setColor(Color.argb(255, 255, 255, 255));
+        paint.setColor(_textColor);
 
         paint.setTextSize(70);
 
@@ -255,7 +270,7 @@ public class GameStage extends SurfaceView implements Runnable {
 
         if(_score > 0) {
 
-            String msgScore = String.format("Last score: %s", _score);
+            String msgScore = String.format(_lastScoreMsg, _score);
             float scoreMeasure = paint.measureText(msgScore);
 
             halfText = Math.round(scoreMeasure / 2);
@@ -266,12 +281,11 @@ public class GameStage extends SurfaceView implements Runnable {
                     (_screenY / 2) - 100, paint);
         }
 
-        String msgStart = "Touch the screen to start game";
-        float startMeasure = paint.measureText(msgStart);
+        float startMeasure = paint.measureText(_startPromptMsg);
 
         halfText = Math.round(startMeasure / 2);
 
-        canvas.drawText(msgStart, halfScreen - halfText, _screenY / 2, paint);
+        canvas.drawText(_startPromptMsg, halfScreen - halfText, _screenY / 2, paint);
     }
 
     @Override
