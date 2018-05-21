@@ -25,6 +25,7 @@ public class GameStage extends SurfaceView implements Runnable {
     private final SurfaceHolder _surfaceHolder;
     private final Paint _paint;
     private Canvas _canvas;
+    private volatile boolean _isRunning;
     private volatile boolean _isPlaying;
     private int _screenX;
     private int _screenY;
@@ -59,23 +60,27 @@ public class GameStage extends SurfaceView implements Runnable {
 
         _food = new Rect();
 
-        startGame();
+        _nextFrameTime = System.currentTimeMillis();
+
+        //startGame();
     }
 
     @Override
     public void run() {
-        while (_isPlaying) {
+        while (_isRunning) {
 
-            if(updateRequired()) {
-                update();
+            if (updateRequired()) {
+
+                if(_isPlaying) {
+                    update();
+                }
                 draw();
             }
-
         }
     }
 
     public void pause() {
-        _isPlaying = false;
+        _isRunning = false;
         try {
             _thread.join();
         } catch (InterruptedException e) {
@@ -84,7 +89,7 @@ public class GameStage extends SurfaceView implements Runnable {
     }
 
     public void resume() {
-        _isPlaying = true;
+        _isRunning = true;
         _thread = new Thread(this);
         _thread.start();
     }
@@ -99,6 +104,8 @@ public class GameStage extends SurfaceView implements Runnable {
         spawnFood();
         _score = 0;
         _nextFrameTime = System.currentTimeMillis();
+
+        _isPlaying = true;
     }
 
     private void spawnFood() {
@@ -139,7 +146,7 @@ public class GameStage extends SurfaceView implements Runnable {
 
         if (detectDeath()) {
 
-            startGame();
+            _isPlaying = false;
         }
     }
 
@@ -178,70 +185,119 @@ public class GameStage extends SurfaceView implements Runnable {
 
             _canvas = _surfaceHolder.lockCanvas();
 
-            // Set background color
-            _canvas.drawColor(Color.argb(255, 26, 128, 182));
-
-            // Set controls color
-            _paint.setColor(Color.argb(100, 255, 255, 255));
-
-            // Draw controls
-            for (Rect control : _controls.getButtons()) {
-                _canvas.drawRect(
-                        control.left,
-                        control.top,
-                        control.right,
-                        control.bottom,
-                        _paint);
+            if(_isPlaying) {
+                drawGame(_canvas, _paint);
+            } else {
+                drawStart(_canvas, _paint);
             }
-
-            // Set food color
-            _paint.setColor(Color.argb(255, 100, 255, 100));
-            _canvas.drawRect(
-                    _food.left,
-                    _food.top,
-                    _food.right,
-                    _food.bottom,
-                    _paint);
-
-            // Set snake color
-            _paint.setColor(Color.argb(255, 255, 255, 255));
-
-            // Draw the snake
-            for (int i = 0; i < _snake.getSnakeLength() + 1; i++) {
-                _canvas.drawRect(_snake.bodyXs[i] * _snakeBlockSize,
-                        (_snake.bodyYs[i] * _snakeBlockSize),
-                        (_snake.bodyXs[i] * _snakeBlockSize) + _snakeBlockSize,
-                        (_snake.bodyYs[i] * _snakeBlockSize) + _snakeBlockSize,
-                        _paint);
-            }
-
-            // Scale the HUD text
-            _paint.setTextSize(70);
-            _canvas.drawText(String.format("Score: %s", _score), 10, 60, _paint);
 
             _surfaceHolder.unlockCanvasAndPost(_canvas);
         }
     }
 
+    private void drawGame(Canvas canvas, Paint paint) {
+
+        // Set background color
+        canvas.drawColor(Color.argb(255, 26, 128, 182));
+
+        // Set controls color
+        paint.setColor(Color.argb(100, 255, 255, 255));
+
+        // Draw controls
+        for (Rect control : _controls.getButtons()) {
+            canvas.drawRect(
+                    control.left,
+                    control.top,
+                    control.right,
+                    control.bottom,
+                    paint);
+        }
+
+        // Set food color
+        paint.setColor(Color.argb(255, 100, 255, 100));
+        canvas.drawRect(
+                _food.left,
+                _food.top,
+                _food.right,
+                _food.bottom,
+                paint);
+
+        // Set snake color
+        paint.setColor(Color.argb(255, 255, 255, 255));
+
+        // Draw the snake
+        for (int i = 0; i < _snake.getSnakeLength() + 1; i++) {
+            canvas.drawRect(_snake.bodyXs[i] * _snakeBlockSize,
+                    (_snake.bodyYs[i] * _snakeBlockSize),
+                    (_snake.bodyXs[i] * _snakeBlockSize) + _snakeBlockSize,
+                    (_snake.bodyYs[i] * _snakeBlockSize) + _snakeBlockSize,
+                    paint);
+        }
+
+        // Scale the HUD text
+        paint.setTextSize(70);
+        canvas.drawText(String.format("Score: %s", _score), 10, 60, paint);
+    }
+
+    private void drawStart(Canvas canvas, Paint paint) {
+
+        // Set background color
+        canvas.drawColor(Color.argb(255, 26, 128, 182));
+
+        // Set text color
+        paint.setColor(Color.argb(255, 255, 255, 255));
+
+        paint.setTextSize(70);
+
+        int halfScreen = _screenX / 2;
+
+        int halfText;
+
+        if(_score > 0) {
+
+            String msgScore = String.format("Last score: %s", _score);
+            float scoreMeasure = paint.measureText(msgScore);
+
+            halfText = Math.round(scoreMeasure / 2);
+
+            canvas.drawText(
+                    msgScore,
+                    halfScreen - halfText,
+                    (_screenY / 2) - 100, paint);
+        }
+
+        String msgStart = "Touch the screen to start game";
+        float startMeasure = paint.measureText(msgStart);
+
+        halfText = Math.round(startMeasure / 2);
+
+        canvas.drawText(msgStart, halfScreen - halfText, _screenY / 2, paint);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent motionEvent) {
 
-        switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_UP:
+        if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+
+            if(_isPlaying) {
 
                 int posX = Math.round(motionEvent.getX());
                 int posY = Math.round(motionEvent.getY());
 
-                if(_controls.getButton(Controls.Button.LEFT).contains(posX, posY)) {
+                if (_controls.getButton(Controls.Button.LEFT).contains(posX, posY)) {
                     _snake.setCurrentDirection(Snake.Direction.LEFT);
-                } else if(_controls.getButton(Controls.Button.UP).contains(posX, posY)) {
+                } else if (_controls.getButton(Controls.Button.UP).contains(posX, posY)) {
                     _snake.setCurrentDirection(Snake.Direction.UP);
-                } else if(_controls.getButton(Controls.Button.RIGHT).contains(posX, posY)) {
+                } else if (_controls.getButton(Controls.Button.RIGHT).contains(posX, posY)) {
                     _snake.setCurrentDirection(Snake.Direction.RIGHT);
-                } else if(_controls.getButton(Controls.Button.DOWN).contains(posX, posY)) {
+                } else if (_controls.getButton(Controls.Button.DOWN).contains(posX, posY)) {
                     _snake.setCurrentDirection(Snake.Direction.DOWN);
                 }
+            } else {
+                startGame();
+            }
         }
-        return true;
+
+        return super.onTouchEvent(motionEvent);
     }
 }
