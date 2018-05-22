@@ -9,6 +9,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import br.com.mxel.snakegame.R;
@@ -129,8 +131,17 @@ public class GameStage extends SurfaceView implements Runnable {
     private void spawnFood() {
 
         Random random = new Random();
-        int rx = random.nextInt(NUM_BLOCKS_WIDE - 1) + 1;
-        int ry = random.nextInt(_numBlocksHigh - 1) + 1;
+        int rx;
+        int ry;
+
+        List xs = Arrays.asList(_snake.bodyYs);
+        List ys = Arrays.asList(_snake.bodyYs);
+
+        do {
+            rx = random.nextInt(NUM_BLOCKS_WIDE - 1) + 1;
+            ry = random.nextInt(_numBlocksHigh - 1) + 1;
+
+        } while (xs.contains(rx) && ys.contains(ry));
 
         int x = rx * _snakeBlockSize;
         int y = ry * _snakeBlockSize;
