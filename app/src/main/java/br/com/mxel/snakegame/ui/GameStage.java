@@ -35,6 +35,7 @@ public class GameStage extends SurfaceView implements Runnable {
     private int _controlButtonSize;
     private int _numBlocksHigh;
     private long _nextFrameTime;
+    private int _maxBlocksOnScreen;
 
     private Snake _snake;
     private Controls _controls;
@@ -44,6 +45,7 @@ public class GameStage extends SurfaceView implements Runnable {
     private String _currentScoreMsg;
     private String _lastScoreMsg;
     private String _startPromptMsg;
+    private String _congratulationsMsg;
 
     private int _backgroundColor;
     private int _textColor;
@@ -57,6 +59,7 @@ public class GameStage extends SurfaceView implements Runnable {
         _currentScoreMsg = getContext().getString(R.string.current_score);
         _lastScoreMsg = getContext().getString(R.string.last_score);
         _startPromptMsg = getContext().getString(R.string.start_game_prompt);
+        _congratulationsMsg = getContext().getString(R.string.congratulations);
 
         _backgroundColor = getContext().getResources().getColor(R.color.background);
         _textColor = getContext().getResources().getColor(R.color.text);
@@ -73,6 +76,8 @@ public class GameStage extends SurfaceView implements Runnable {
         _snakeBlockSize = _screenX / NUM_BLOCKS_WIDE;
 
         _numBlocksHigh = _screenY / _snakeBlockSize;
+
+        _maxBlocksOnScreen = NUM_BLOCKS_WIDE * _numBlocksHigh;
 
         _controlButtonSize = _snakeBlockSize * 3;
 
@@ -119,7 +124,8 @@ public class GameStage extends SurfaceView implements Runnable {
         _snake = new Snake(
                 NUM_BLOCKS_WIDE / 2,
                 _numBlocksHigh / 2,
-                Snake.Direction.RIGHT);
+                Snake.Direction.RIGHT,
+                _maxBlocksOnScreen);
 
         spawnFood();
         _score = 0;
@@ -181,9 +187,14 @@ public class GameStage extends SurfaceView implements Runnable {
 
     private void eatFood() {
 
-        spawnFood();
-        _snake.increaseSize();
         _score++;
+
+        if(_score < (_maxBlocksOnScreen - 1)) {
+            spawnFood();
+            _snake.increaseSize();
+        } else {
+            _isPlaying = false;
+        }
     }
 
     private boolean detectDeath(){
@@ -290,6 +301,18 @@ public class GameStage extends SurfaceView implements Runnable {
                     msgScore,
                     halfScreen - halfText,
                     (_screenY / 2) - 100, paint);
+        }
+
+        if(_score >= (_maxBlocksOnScreen -1)) {
+
+            float congratsMeasure = paint.measureText(_congratulationsMsg);
+
+            halfText = Math.round(congratsMeasure / 2);
+
+            canvas.drawText(
+                    _congratulationsMsg,
+                    halfScreen - halfText,
+                    (_screenY / 2) - 200, paint);
         }
 
         float startMeasure = paint.measureText(_startPromptMsg);

@@ -15,10 +15,10 @@ public class Snake {
 
     private Direction _currentDirection;
 
-    public Snake(int initX, int initY, Direction direction) {
+    public Snake(int initX, int initY, Direction direction, int maxLength) {
 
-        bodyXs = new int[200];
-        bodyYs = new int[200];
+        bodyXs = new int[maxLength];
+        bodyYs = new int[maxLength];
         bodyXs[0] = initX;
         bodyYs[0] = initY;
         _currentDirection = direction;
